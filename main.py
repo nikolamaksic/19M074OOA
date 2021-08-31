@@ -9,14 +9,16 @@ import copy
 
 # parameters
 axis_size = 100
-popul_size = 20
-num_of_alg_iter = 50
-prob_to_mutate = 0.05
+# popul_size = 300
+# num_of_alg_iter = 1000
+popul_size = 200
+num_of_alg_iter = 10000
+prob_to_mutate = 0.1
 cub_list = [x for x in range(1,21)]
 im_folder = r'.\img\\'
 
 def find_space_bounds(cubes):
-    x_min,y_min,z_min = 0,0,0
+    x_min,y_min,z_min = 0,0,0 
     x_max,y_max,z_max = np.inf,np.inf,np.inf
     x_min_a,y_min_a,z_min_a = [],[],[]
     x_max_a,y_max_a,z_max_a = [],[],[]
@@ -63,23 +65,24 @@ def draw_and_save_space(cubes,it):
       
     # Plot figure
     
-    plt.ioff()
     fig = plt.figure()
+    # plt.ion()
     
-    plt.ioff()
+    # plt.ioff()
     ax = fig.add_subplot(111, projection='3d')
     # Voxels is used to customizations of the
     # sizes, positions and colors.
 
     ax.voxels(data, facecolors=colors, edgecolors='grey')
+    plt.show()
     
-    plt.ioff()
-    plt.savefig(im_folder+'\\'+str(it)+'.PNG',bbox_inches='tight')   
+    # plt.ioff()
+    plt.savefig(im_folder+'\\'+str(it)+'.PNG',bbox_inches='tight')  
 
 def check_two_cubes_overlap(cubeA,cubeA_size,cubeB,cubeB_size):
-    ret = cubeA[0]+cubeA_size > cubeB[0] and cubeA[0] < cubeB[0]+cubeB_size and\
+    ret = (cubeA[0]+cubeA_size > cubeB[0] and cubeA[0] < cubeB[0]+cubeB_size and\
                cubeA[1]+cubeA_size > cubeB[1] and cubeA[1] < cubeB[1]+cubeB_size and\
-               cubeA[2]+cubeA_size > cubeB[2] and cubeA[2] < cubeB[2]+cubeB_size
+               cubeA[2]+cubeA_size > cubeB[2] and cubeA[2] < cubeB[2]+cubeB_size)
     return ret
 
 def current_cube_position_overlap(cubes,k):
@@ -170,7 +173,7 @@ def calculate_fitness_for_individual(cubes):
     x_min, y_min, z_min = min(x_min_a),min(y_min_a),min(z_min_a)
     x_max, y_max, z_max = max(x_max_a),max(y_max_a),max(z_max_a)
     # V = (x_max-x_min)*(y_max-y_min)*(z_max-z_min)
-    V = (x_max-x_min)*(y_max-y_min)*(z_max-z_min)
+    V = (x_max-x_min)*(y_max-y_min)*(z_max-z_min)-80000
     return  1/V # biger fitness = better individua
 
 def find_best_individual(p):
@@ -200,7 +203,8 @@ def find_best_individual(p):
             ind = i
     
     assert max_fit!=0
-    V = int(round(1/max_fit)) # Volume
+    # V = int(round(1/max_fit)) # Volume
+    V = int(round(1/max_fit))+80000 # Volume
     return indiv, ind, V
 
 def append_second_parent_features_to_child(current_ch, sec_par_cub):
@@ -241,8 +245,10 @@ def append_second_parent_features_to_child(current_ch, sec_par_cub):
     
 
 def crossover(par1, par2):
-    d = 4
-    cross_pos = int(round(len(cub_list)/d))
+    # d = np.random.randint(1, len(par1)-1)
+    cross_pos = np.random.randint(1, len(par1)-1)
+    
+    # cross_pos = int(round(len(cub_list)/d))
     ch1 = {}
     ch2 = {}
     ind = 0
@@ -251,9 +257,9 @@ def crossover(par1, par2):
     for k in par1:
         if(ind<=cross_pos):
             ch1[k] = par1[k]
-            p1[k]  = par2[k]
+            ch2[k] = par2[k]
         else:
-            ch2[k] = par1[k]
+            p1[k]  = par1[k]
             p2[k]  = par2[k]
         ind+=1
     
@@ -303,11 +309,11 @@ def generate_next_population(popul):
         fit_sum += norm_fit[ind]
         fit_array[ind] = fit_sum
     # dont give multiple cross with same parents
-    for k in range(int(round(len(popul)/4))):
-        # par1_ind = find_parent_index(popul,fit_array)
-        # par2_ind = find_parent_index(popul,fit_array)
-        par1_ind = k
-        par2_ind = int(round(len(popul)/2))+k-1
+    for k in range(int(round(len(popul)/2))):
+        par1_ind = find_parent_index(popul,fit_array)
+        par2_ind = find_parent_index(popul,fit_array)
+        # par1_ind = k
+        # par2_ind = int(round(len(popul)/2))+k-1
         
         if(par1_ind==par2_ind):
             while(par1_ind==par2_ind):
@@ -315,8 +321,8 @@ def generate_next_population(popul):
         
         par1 = popul[par1_ind]
         par2 = popul[par2_ind]
-        new_pop.append(par1)
-        new_pop.append(par2)
+        # new_pop.append(par1)
+        # new_pop.append(par2)
         new_ch1,new_ch2 = crossover(par1,par2)
         new_pop.append(new_ch1)
         new_pop.append(new_ch2)
@@ -328,7 +334,41 @@ def generate_next_population(popul):
         
     return new_pop
       
-   
+# def generate_next_population(popul):
+#     fitness_f = np.zeros(len(popul))
+#     new_pop = []
+#     for ind,p in enumerate(popul):
+#         fitness_f[ind] = calculate_fitness_for_individual(p)
+        
+        
+#     popul = [x for _, x in sorted(zip(popul,fitness_f))]
+#     k = popul_size/5
+#     new_pop = popul[]
+#     # dont give multiple cross with same parents
+#     for k in range(int(round(len(popul)/2))):
+#         par1_ind = find_parent_index(popul,fit_array)
+#         par2_ind = find_parent_index(popul,fit_array)
+#         # par1_ind = k
+#         # par2_ind = int(round(len(popul)/2))+k-1
+        
+#         if(par1_ind==par2_ind):
+#             while(par1_ind==par2_ind):
+#                 par2_ind = find_parent_index(popul,fit_array)
+        
+#         par1 = popul[par1_ind]
+#         par2 = popul[par2_ind]
+#         # new_pop.append(par1)
+#         # new_pop.append(par2)
+#         new_ch1,new_ch2 = crossover(par1,par2)
+#         new_pop.append(new_ch1)
+#         new_pop.append(new_ch2)
+    
+    
+#     if(prob_to_mutate>np.random.uniform(0,1)):
+#         child_to_mut = np.random.randint(0, len(popul))
+#         popul[child_to_mut] = mutate(popul[child_to_mut])
+        
+#     return new_pop   
 
     
 def create_individual():
@@ -367,8 +407,17 @@ def main():
         file.write("%s = %s\n" %("a_dictionary", bes_ind))
     
     file.close()
+    return best_vol_per_iter, best_invidi_per_iter
+
 if __name__=="__main__":
-    main()
+    bv, bi = main()
+    bi_sort = [x for _, x in sorted(zip(bv,bi))]
+    bi_max = bi_sort[0]
+    draw_and_save_space(bi_max,1001)
+    
+    fig = plt.figure()
+    plt.plot(bv)
+    plt.show()
     
     
     

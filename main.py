@@ -11,9 +11,9 @@ import copy
 axis_size = 100
 # popul_size = 300
 # num_of_alg_iter = 1000
-popul_size = 200
-num_of_alg_iter = 10000
-prob_to_mutate = 0.1
+popul_size = 120
+num_of_alg_iter = 1000
+prob_to_mutate = 0.05
 cub_list = [x for x in range(1,21)]
 im_folder = r'.\img\\'
 
@@ -80,9 +80,9 @@ def draw_and_save_space(cubes,it):
     plt.savefig(im_folder+'\\'+str(it)+'.PNG',bbox_inches='tight')  
 
 def check_two_cubes_overlap(cubeA,cubeA_size,cubeB,cubeB_size):
-    ret = (cubeA[0]+cubeA_size > cubeB[0] and cubeA[0] < cubeB[0]+cubeB_size and\
-               cubeA[1]+cubeA_size > cubeB[1] and cubeA[1] < cubeB[1]+cubeB_size and\
-               cubeA[2]+cubeA_size > cubeB[2] and cubeA[2] < cubeB[2]+cubeB_size)
+    ret = (((cubeA[0]+cubeA_size) >= cubeB[0]) and (cubeA[0] <= (cubeB[0]+cubeB_size)) and\
+               ((cubeA[1]+cubeA_size) >= cubeB[1]) and (cubeA[1] <= (cubeB[1]+cubeB_size)) and\
+               (cubeA[2]+cubeA_size >= cubeB[2]) and (cubeA[2] <= (cubeB[2]+cubeB_size)))
     return ret
 
 def current_cube_position_overlap(cubes,k):
@@ -208,28 +208,30 @@ def find_best_individual(p):
     return indiv, ind, V
 
 def append_second_parent_features_to_child(current_ch, sec_par_cub):
-    new_ch = current_ch
+    new_ch = copy.deepcopy(current_ch)
     x_min_ch, y_min_ch, z_min_ch, x_max_ch, y_max_ch, z_max_ch = find_space_bounds(current_ch)
     x_min_par, y_min_par, z_min_par, x_max_par, y_max_par, z_max_par = find_space_bounds(sec_par_cub)
-    for k in sec_par_cub:
-        sec_par_cub[k][0] = sec_par_cub[k][0] + x_min_ch - x_min_par
-        sec_par_cub[k][1] = sec_par_cub[k][1] + y_min_ch - y_min_par
-        sec_par_cub[k][2] = sec_par_cub[k][2] + z_min_ch - z_min_par
+    
     pom_sec_par = copy.deepcopy(sec_par_cub)
-    if(not check_two_array_cubes_overlaping(sec_par_cub, current_ch)):
+    for k in pom_sec_par:
+        pom_sec_par[k][0] = sec_par_cub[k][0] + x_min_ch - x_min_par
+        pom_sec_par[k][1] = sec_par_cub[k][1] + y_min_ch - y_min_par
+        pom_sec_par[k][2] = sec_par_cub[k][2] + z_min_ch - z_min_par
+        
+    if(not check_two_array_cubes_overlaping(pom_sec_par, current_ch)):
         for k, v in pom_sec_par.items():
             new_ch[k] = v
         return new_ch
     for _ in range(x_min_ch, x_max_ch + 1):
         for k in pom_sec_par:
             pom_sec_par[k][0] += 1
-            pom_sec_par[k][1] = sec_par_cub[k][1]
+            pom_sec_par[k][1] = sec_par_cub[k][1] + y_min_ch - y_min_par
         
         for _ in range(y_min_ch, y_max_ch + 1):
             
             for k in pom_sec_par:
                 pom_sec_par[k][1] += 1
-                pom_sec_par[k][2] = sec_par_cub[k][2]
+                pom_sec_par[k][2] = sec_par_cub[k][2] + z_min_ch - z_min_par
             
             for _ in range(y_min_ch, y_max_ch + 1):
                 for k in pom_sec_par:
@@ -269,7 +271,12 @@ def crossover(par1, par2):
     return ch1, ch2
 
 
-
+def individ_correct(cubes):
+    reg = True
+    for k,v in cubes.items():
+        if(current_cube_position_overlap(cubes,k)):
+            reg = False
+    return reg
 
 def mutate(cub):
     cub_to_mut = np.random.choice(cub_list)
@@ -281,7 +288,7 @@ def mutate(cub):
             finished = True
     return cub
     
-def find_parent_index(popul,fitness_arr):
+def find_parent_index(fitness_arr):
     p = np.random.uniform(0, 1)
     k = 0
     while(p>=fitness_arr[k]):
@@ -309,15 +316,17 @@ def generate_next_population(popul):
         fit_sum += norm_fit[ind]
         fit_array[ind] = fit_sum
     # dont give multiple cross with same parents
+    used_par = []
     for k in range(int(round(len(popul)/2))):
-        par1_ind = find_parent_index(popul,fit_array)
-        par2_ind = find_parent_index(popul,fit_array)
+        par1_ind = find_parent_index(fit_array)
+        par2_ind = find_parent_index(fit_array)
         # par1_ind = k
         # par2_ind = int(round(len(popul)/2))+k-1
-        
+        while(not(par1_ind in used_par)):
+            par1_ind = find_parent_index(fit_array)
         if(par1_ind==par2_ind):
             while(par1_ind==par2_ind):
-                par2_ind = find_parent_index(popul,fit_array)
+                par2_ind = find_parent_index(fit_array)
         
         par1 = popul[par1_ind]
         par2 = popul[par2_ind]
@@ -346,14 +355,14 @@ def generate_next_population(popul):
 #     new_pop = popul[]
 #     # dont give multiple cross with same parents
 #     for k in range(int(round(len(popul)/2))):
-#         par1_ind = find_parent_index(popul,fit_array)
-#         par2_ind = find_parent_index(popul,fit_array)
+#         par1_ind = find_parent_index(fit_array)
+#         par2_ind = find_parent_index(fit_array)
 #         # par1_ind = k
 #         # par2_ind = int(round(len(popul)/2))+k-1
         
 #         if(par1_ind==par2_ind):
 #             while(par1_ind==par2_ind):
-#                 par2_ind = find_parent_index(popul,fit_array)
+#                 par2_ind = find_parent_index(fit_array)
         
 #         par1 = popul[par1_ind]
 #         par2 = popul[par2_ind]
@@ -388,6 +397,9 @@ def main():
     best_invidi_per_iter = []
     best_vol_per_iter = []
     p = create_population(popul_size)
+    for z in p:
+        if(not individ_correct(z)):
+            print('Fail')
     c,ind,V = find_best_individual(p)
     print('\n')
     for k in range(num_of_alg_iter):
@@ -411,13 +423,19 @@ def main():
 
 if __name__=="__main__":
     bv, bi = main()
-    bi_sort = [x for _, x in sorted(zip(bv,bi))]
-    bi_max = bi_sort[0]
-    draw_and_save_space(bi_max,1001)
-    
+        
     fig = plt.figure()
     plt.plot(bv)
     plt.show()
+    
+    draw_and_save_space(bi[-1],1000)
+    # bi_sort = [x for _, x in sorted(zip(bv,bi))]
+    # bi_max = bi_sort[0]
+    # draw_and_save_space(bi_max,1001)
+    
+    # fig = plt.figure()
+    # plt.plot(bv)
+    # plt.show()
     
     
     

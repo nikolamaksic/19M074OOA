@@ -8,11 +8,9 @@ import time
 import copy
 
 # parameters
-axis_size = 100
-# popul_size = 300
-# num_of_alg_iter = 1000
+axis_size = 200
 popul_size = 120
-num_of_alg_iter = 1000
+num_of_alg_iter = 5000
 prob_to_mutate = 0.05
 cub_list = [x for x in range(1,21)]
 im_folder = r'.\img\\'
@@ -74,10 +72,12 @@ def draw_and_save_space(cubes,it):
     # sizes, positions and colors.
 
     ax.voxels(data, facecolors=colors, edgecolors='grey')
-    plt.show()
+    # plt.show()
     
-    # plt.ioff()
-    plt.savefig(im_folder+'\\'+str(it)+'.PNG',bbox_inches='tight')  
+    plt.ioff()
+    curr_time = time.strftime("%d_%m_%Y_%H_%M")
+    plt.savefig(im_folder+'\\'+str(it)+'_time_'+curr_time+'.PNG',bbox_inches='tight')  
+    plt.close()
 
 def check_two_cubes_overlap(cubeA,cubeA_size,cubeB,cubeB_size):
     ret = (((cubeA[0]+cubeA_size) >= cubeB[0]) and (cubeA[0] <= (cubeB[0]+cubeB_size)) and\
@@ -315,18 +315,22 @@ def generate_next_population(popul):
     for ind in range(len(fit_array)):
         fit_sum += norm_fit[ind]
         fit_array[ind] = fit_sum
-    # dont give multiple cross with same parents
+    # add new child
     used_par = []
-    for k in range(int(round(len(popul)/2))):
+    for k in range(int(round(len(popul)/4))):
         par1_ind = find_parent_index(fit_array)
         par2_ind = find_parent_index(fit_array)
         # par1_ind = k
         # par2_ind = int(round(len(popul)/2))+k-1
-        while(not(par1_ind in used_par)):
+        while(par1_ind in used_par):
             par1_ind = find_parent_index(fit_array)
-        if(par1_ind==par2_ind):
-            while(par1_ind==par2_ind):
-                par2_ind = find_parent_index(fit_array)
+        used_par.append(par1_ind) 
+        
+        while(par2_ind in used_par):
+            par2_ind = find_parent_index(fit_array)
+        used_par.append(par2_ind) 
+        
+        
         
         par1 = popul[par1_ind]
         par2 = popul[par2_ind]
@@ -336,48 +340,22 @@ def generate_next_population(popul):
         new_pop.append(new_ch1)
         new_pop.append(new_ch2)
     
-    
+    # add old 'good' inviduals
+    old_individuals = []
+    for k in range(int(round(len(popul)/2))):
+        old_ind = find_parent_index(fit_array)
+        while(old_ind in old_individuals):
+            old_ind = find_parent_index(fit_array)
+        old_individuals.append(old_ind)
+        new_pop.append(popul[old_ind])
+            
     if(prob_to_mutate>np.random.uniform(0,1)):
         child_to_mut = np.random.randint(0, len(popul))
         popul[child_to_mut] = mutate(popul[child_to_mut])
         
     return new_pop
       
-# def generate_next_population(popul):
-#     fitness_f = np.zeros(len(popul))
-#     new_pop = []
-#     for ind,p in enumerate(popul):
-#         fitness_f[ind] = calculate_fitness_for_individual(p)
-        
-        
-#     popul = [x for _, x in sorted(zip(popul,fitness_f))]
-#     k = popul_size/5
-#     new_pop = popul[]
-#     # dont give multiple cross with same parents
-#     for k in range(int(round(len(popul)/2))):
-#         par1_ind = find_parent_index(fit_array)
-#         par2_ind = find_parent_index(fit_array)
-#         # par1_ind = k
-#         # par2_ind = int(round(len(popul)/2))+k-1
-        
-#         if(par1_ind==par2_ind):
-#             while(par1_ind==par2_ind):
-#                 par2_ind = find_parent_index(fit_array)
-        
-#         par1 = popul[par1_ind]
-#         par2 = popul[par2_ind]
-#         # new_pop.append(par1)
-#         # new_pop.append(par2)
-#         new_ch1,new_ch2 = crossover(par1,par2)
-#         new_pop.append(new_ch1)
-#         new_pop.append(new_ch2)
-    
-    
-#     if(prob_to_mutate>np.random.uniform(0,1)):
-#         child_to_mut = np.random.randint(0, len(popul))
-#         popul[child_to_mut] = mutate(popul[child_to_mut])
-        
-#     return new_pop   
+
 
     
 def create_individual():
@@ -392,10 +370,24 @@ def create_individual():
             k += 1
         
     return cubes
-  
+def calculate_popul_mean_V(p):
+    popul_v = []
+    for c in p:
+        x_min, y_min, z_min, x_max, y_max, z_max = find_space_bounds(c)
+        V = (x_max-x_min)*(y_max-y_min)*(z_max-z_min)
+        popul_v.append(V)
+    v_m = np.nanmean(popul_v)
+    return v_m
+    
+    
+    
 def main():
     best_invidi_per_iter = []
     best_vol_per_iter = []
+    mean_vol_per_iter = []
+    
+    list_of_plots = [0,9,99,199,299,399,499,599,699,799,899,
+                     999,1499,1999,2499,2999,3499,3999,4499,4999]
     p = create_population(popul_size)
     for z in p:
         if(not individ_correct(z)):
@@ -405,38 +397,39 @@ def main():
     for k in range(num_of_alg_iter):
         p = generate_next_population(p)
         c,ind,V = find_best_individual(p)
-        print('Iteration: {0: <4}/{1: <4}, the lowest volume: {2}'.format(k,num_of_alg_iter,V))
+        print('Iteration: {0: <4}/{1: <4}, the lowest volume: {2}'.format(k+1,num_of_alg_iter,V))
+        if(k in list_of_plots):
+            draw_and_save_space(p[ind],k+1)
+        current_it_mea_vol = calculate_popul_mean_V(p)
+        mean_vol_per_iter.append(current_it_mea_vol)
         best_invidi_per_iter.append(c)
         best_vol_per_iter.append(V)
         
-        # draw_and_save_space(c,k)
-    # for ind,v in enumerate(best_vol_per_iter):
-    #     print("Iter: {0: <4}- volume: {1}".format(str(ind),v))
-    
+
     # save all results into a file
     file = open("sample.txt", "w")
     for bes_ind in best_invidi_per_iter:
         file.write("%s = %s\n" %("a_dictionary", bes_ind))
     
     file.close()
-    return best_vol_per_iter, best_invidi_per_iter
+    return best_vol_per_iter, mean_vol_per_iter, best_invidi_per_iter
 
 if __name__=="__main__":
-    bv, bi = main()
+    bv, bm, bi = main()
         
     fig = plt.figure()
-    plt.plot(bv)
-    plt.show()
+    plt.plot(bv,label='The best volume')
+    plt.plot(bm,label='Mean volume')
+    plt.xlabel("Iteration")
+    plt.ylabel("Volume")
+    # Turn off tick labels
+
+    plt.legend(loc="best")
+    fig.show()
+    plt.savefig('Grafik.png',bbox_inches='tight')
     
     draw_and_save_space(bi[-1],1000)
-    # bi_sort = [x for _, x in sorted(zip(bv,bi))]
-    # bi_max = bi_sort[0]
-    # draw_and_save_space(bi_max,1001)
-    
-    # fig = plt.figure()
-    # plt.plot(bv)
-    # plt.show()
-    
+
     
     
     

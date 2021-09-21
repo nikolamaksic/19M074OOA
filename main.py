@@ -6,14 +6,18 @@ import numpy as np
 import math as ma
 import time
 import copy
-
+from pathlib import Path
 # parameters
-axis_size = 200
-popul_size = 120
-num_of_alg_iter = 5000
-prob_to_mutate = 0.05
+axis_size = 150
+popul_size = 1000
+num_of_alg_iter = 1000
+prob_to_mutate = 0.1
 cub_list = [x for x in range(1,21)]
-im_folder = r'.\img\\'
+
+curr_time = time.strftime("%d_%m_%Y_%H_%M")
+im_folder = r'.\img\\'+curr_time+'\\'
+
+Path(im_folder).mkdir(parents=True, exist_ok=True)
 
 def find_space_bounds(cubes):
     x_min,y_min,z_min = 0,0,0 
@@ -75,8 +79,7 @@ def draw_and_save_space(cubes,it):
     # plt.show()
     
     plt.ioff()
-    curr_time = time.strftime("%d_%m_%Y_%H_%M")
-    plt.savefig(im_folder+'\\'+str(it)+'_time_'+curr_time+'.PNG',bbox_inches='tight')  
+    plt.savefig(im_folder+'\\'+str(it)+'.PNG',bbox_inches='tight')  
     plt.close()
 
 def check_two_cubes_overlap(cubeA,cubeA_size,cubeB,cubeB_size):
@@ -334,8 +337,6 @@ def generate_next_population(popul):
         
         par1 = popul[par1_ind]
         par2 = popul[par2_ind]
-        # new_pop.append(par1)
-        # new_pop.append(par2)
         new_ch1,new_ch2 = crossover(par1,par2)
         new_pop.append(new_ch1)
         new_pop.append(new_ch2)
@@ -399,7 +400,8 @@ def main():
         c,ind,V = find_best_individual(p)
         print('Iteration: {0: <4}/{1: <4}, the lowest volume: {2}'.format(k+1,num_of_alg_iter,V))
         if(k in list_of_plots):
-            draw_and_save_space(p[ind],k+1)
+            # draw_and_save_space(p[ind],k+1)
+            pass
         current_it_mea_vol = calculate_popul_mean_V(p)
         mean_vol_per_iter.append(current_it_mea_vol)
         best_invidi_per_iter.append(c)
@@ -411,11 +413,24 @@ def main():
     for bes_ind in best_invidi_per_iter:
         file.write("%s = %s\n" %("a_dictionary", bes_ind))
     
+    file = open("sample.txt", "w")
+    for bes_ind in best_invidi_per_iter:
+        file.write("%s = %s\n" %("a_dictionary", bes_ind))
+    
     file.close()
     return best_vol_per_iter, mean_vol_per_iter, best_invidi_per_iter
 
 if __name__=="__main__":
     bv, bm, bi = main()
+        
+    filebv = open("best_vol.txt", "w")
+    filebv.write(str(bv))
+    filebv.close()    
+    
+    filebm = open("best_mean.txt", "w")
+    filebm.write(str(bm))
+    filebm.close()
+    
         
     fig = plt.figure()
     plt.plot(bv,label='The best volume')
@@ -440,7 +455,7 @@ if __name__=="__main__":
     
     
     
-    
+     
     
     
     

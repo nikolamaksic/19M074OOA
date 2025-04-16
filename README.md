@@ -11,6 +11,27 @@ The 3D Bin Packing Problem involves placing 20 cubes of different sizes into the
 * All sides are aligned to the main coordinate axes
 * The algorithm optimizes packing to minimize wasted space
 
+### 🛠 Installation
+
+This project requires **Python 3.7+** and the following packages:
+
+- `matplotlib`
+- `plotly`
+
+#### Install with `pip`:
+
+```bash
+pip install -r requirements.txt
+```
+
+▶️ How to Run \
+Once installed, simply run the main script:
+
+
+```bash
+python main.py
+```
+
 ⚙️ Algorithm Details
 The solution is based on a Genetic Algorithm (GA) with the following components:
 
@@ -28,6 +49,7 @@ Fitness Function:
 Fitness = 1 / (Volume of bounding box - volume of biggest box)
 ```
 
-📊 Results: Example Packing Result After 1000 Iterations
-The image below shows the final arrangement of 20 cubes in 3D space after running the genetic algorithm for 1000 generations. The cubes are packed without overlaps, and the volume of the bounding box is minimized.
+📊 Results: \
+Packing Result After 1000 Iterations
+The image below shows the final arrangement of 20 cubes in 3D space after running the genetic algorithm for 1000 generations. The cubes are packed without overlaps, and the volume of the bounding box is minimized. \
 ![Final Result](./results/final_result.png)

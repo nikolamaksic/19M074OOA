@@ -409,27 +409,27 @@ def main():
         
 
     # save all results into a file
-    file = open("sample.txt", "w")
-    for bes_ind in best_invidi_per_iter:
-        file.write("%s = %s\n" %("a_dictionary", bes_ind))
+    # file = open("sample.txt", "w")
+    # for bes_ind in best_invidi_per_iter:
+    #     file.write("%s = %s\n" %("a_dictionary", bes_ind))
     
-    file = open("sample.txt", "w")
-    for bes_ind in best_invidi_per_iter:
-        file.write("%s = %s\n" %("a_dictionary", bes_ind))
+    # file = open("sample.txt", "w")
+    # for bes_ind in best_invidi_per_iter:
+    #     file.write("%s = %s\n" %("a_dictionary", bes_ind))
     
-    file.close()
+    # file.close()
     return best_vol_per_iter, mean_vol_per_iter, best_invidi_per_iter
 
 if __name__=="__main__":
     bv, bm, bi = main()
         
-    filebv = open("best_vol.txt", "w")
-    filebv.write(str(bv))
-    filebv.close()    
+    # filebv = open("best_vol.txt", "w")
+    # filebv.write(str(bv))
+    # filebv.close()    
     
-    filebm = open("best_mean.txt", "w")
-    filebm.write(str(bm))
-    filebm.close()
+    # filebm = open("best_mean.txt", "w")
+    # filebm.write(str(bm))
+    # filebm.close()
     
         
     fig = plt.figure()
@@ -441,20 +441,11 @@ if __name__=="__main__":
 
     plt.legend(loc="best")
     fig.show()
-    plt.savefig('Grafik.png',bbox_inches='tight')
+    plt.savefig('volume_over_iteration.png',bbox_inches='tight')
     
     draw_and_save_space(bi[-1],1000)
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
      
     
     
